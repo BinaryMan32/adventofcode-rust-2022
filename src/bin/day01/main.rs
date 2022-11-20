@@ -2,11 +2,11 @@ use advent_of_code::run;
 use std::str::Lines;
 
 fn part1(input: Lines) -> String {
-    input.into_iter().count().to_string()
+    input.count().to_string()
 }
 
 fn part2(input: Lines) -> String {
-    input.into_iter().count().to_string()
+    input.count().to_string()
 }
 
 fn main() {
