@@ -23,7 +23,7 @@ Run real problem input for a single day:
 cargo run --release --bin day01
 ```
 
-Run real problem input for a single day:
+Run only a single part of real problem input:
 ```
-cargo run --release --bin day01
+cargo run --release --bin day01 part2
 ```

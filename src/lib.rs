@@ -1,4 +1,4 @@
-use std::str::Lines;
+use std::{collections::HashSet, str::Lines};
 
 pub struct Named<T> {
     pub wrapped: T,
@@ -20,17 +20,26 @@ macro_rules! named {
 
 pub struct Runner {
     module_name: &'static str,
+    operations: HashSet<String>,
 }
 
 type Operation = fn(Lines) -> String;
 
 impl Runner {
     pub fn create(module_name: &'static str) -> Self {
-        Self { module_name }
+        Self {
+            module_name,
+            operations: std::env::args().skip(1).collect(),
+        }
     }
 
     pub fn run(&self, op: &Named<Operation>, input: &str) {
-        let result = (op.wrapped)(input.lines());
+        let enabled: bool = self.operations.is_empty() || self.operations.contains(op.name);
+        let result: String = if enabled {
+            (op.wrapped)(input.lines())
+        } else {
+            String::from("(DISABLED)")
+        };
         println!("{} {}: {}", self.module_name, op.name, result);
     }
 }
