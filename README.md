@@ -8,6 +8,17 @@ Install Visual Studio Code extensions
 * Better Toml (for `Cargo.toml`)
 * crates (for `Cargo.toml`)
 
+## Run from VS Code
+
+Click the play button next to `main()` or tests.
+
+To run `release` mode in VS Code with `rust-analyzer` (already configured in `.vscode`)
+- Go to `Settings` > `Workspace`
+- Search for `rust-analyzer.runnables.extraArgs` (default: `[]`)
+- Set to `--release`
+
+## Run from terminal
+
 Run all tests:
 ```
 cargo test --release
