@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! run {
-    ( $op:expr, $input:expr ) => {{
+    ( $op:ident, $input:ident ) => {{
         let result = $op($input.lines());
         println!("{} {}: {}", module_path!(), std::stringify!($op), result);
     }};
@@ -8,7 +8,7 @@ macro_rules! run {
 
 #[macro_export]
 macro_rules! verify {
-    ( $op:expr, $input:expr, $expected:expr ) => {{
+    ( $op:ident, $input:ident, $expected:literal ) => {{
         let result = $op($input.lines());
         assert_eq!(
             result,
