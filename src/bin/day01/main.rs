@@ -17,12 +17,13 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use advent_of_code::verify;
 
     #[test]
     fn example() {
         let input = include_str!("example.txt");
-        verify!(super::part1, input, "1");
-        verify!(super::part2, input, "1");
+        verify!(part1, input, "1");
+        verify!(part2, input, "1");
     }
 }
