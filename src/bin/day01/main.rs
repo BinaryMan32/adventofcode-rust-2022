@@ -1,4 +1,4 @@
-use advent_of_code::run;
+use advent_of_code::{create_runner, named, Named, Runner};
 use std::str::Lines;
 
 fn part1(input: Lines) -> String {
@@ -11,8 +11,9 @@ fn part2(input: Lines) -> String {
 
 fn main() {
     let input = include_str!("input.txt");
-    run!(part1, input);
-    run!(part2, input);
+    let runner: &Runner = create_runner!();
+    runner.run(named!(part1), input);
+    runner.run(named!(part2), input);
 }
 
 #[cfg(test)]
