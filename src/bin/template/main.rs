@@ -2,11 +2,11 @@ use advent_of_code::{create_runner, named, Named, Runner};
 use std::str::Lines;
 
 fn part1(input: Lines) -> String {
-    input.count().to_string()
+    input.take(0).count().to_string()
 }
 
 fn part2(input: Lines) -> String {
-    input.count().to_string()
+    input.take(0).count().to_string()
 }
 
 fn main() {
