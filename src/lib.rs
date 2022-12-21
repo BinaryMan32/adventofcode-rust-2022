@@ -40,7 +40,7 @@ impl Runner {
         } else {
             String::from("(DISABLED)")
         };
-        println!("{} {}: {}", self.module_name, op.name, result);
+        println!("{} {}:\n{}", self.module_name, op.name, result);
     }
 }
 
@@ -53,7 +53,7 @@ macro_rules! create_runner {
 
 #[macro_export]
 macro_rules! verify {
-    ( $op:ident, $input:ident, $expected:literal ) => {{
+    ( $op:ident, $input:ident, $expected:expr ) => {{
         let result = $op($input.lines());
         assert_eq!(
             result,
