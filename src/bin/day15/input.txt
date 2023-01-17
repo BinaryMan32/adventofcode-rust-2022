@@ -1,4 +1,4 @@
-2000000
+Params row=2000000 search=4000000
 Sensor at x=1518415, y=2163633: closest beacon is at x=1111304, y=1535696
 Sensor at x=2474609, y=3598166: closest beacon is at x=2691247, y=4007257
 Sensor at x=426959, y=473371: closest beacon is at x=-529106, y=1145419
