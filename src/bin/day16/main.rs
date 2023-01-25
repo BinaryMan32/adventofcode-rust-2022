@@ -151,6 +151,27 @@ impl<'a> State<'a> {
             None
         }
     }
+
+    fn all_unopened_splits(&'a self) -> impl Iterator<Item = (State, State)> + '_ {
+        self.unopened.iter().powerset().map(|a| {
+            let a = a.iter().map(|&&x| x).collect::<HashSet<_>>();
+            let b = self
+                .unopened
+                .difference(&a)
+                .copied()
+                .collect::<HashSet<_>>();
+            (
+                Self {
+                    unopened: a,
+                    ..*self
+                },
+                Self {
+                    unopened: b,
+                    ..*self
+                },
+            )
+        })
+    }
 }
 
 fn remove_uninteresting_valve(valves: &mut HashMap<String, Valve>, keep: &str) -> Option<Valve> {
@@ -221,7 +242,35 @@ fn part1(input: Lines) -> String {
 }
 
 fn part2(input: Lines) -> String {
-    input.take(0).count().to_string()
+    let valve_vec = input.flat_map(Valve::parse).collect_vec();
+    let mut valves = valve_vec
+        .into_iter()
+        .map(|v| (v.name.clone(), v))
+        .collect::<HashMap<_, _>>();
+
+    println!("original valves");
+    valves.iter().for_each(|v| println!("{v:?}"));
+
+    let start = "AA";
+    simplify_valves(&mut valves, start);
+    println!("simplified valves");
+    valves.iter().for_each(|v| println!("{v:?}"));
+
+    println!("distances");
+    let distance = distance_from_valves(&valves);
+    distance.dump();
+
+    let start = State::new(26, start, &valves);
+    start
+        .all_unopened_splits()
+        .map(|(human, elephant)| {
+            let human = find_most_pressure_released(human, &valves, &distance);
+            let elephant = find_most_pressure_released(elephant, &valves, &distance);
+            human + elephant
+        })
+        .max()
+        .unwrap_or(0)
+        .to_string()
 }
 
 fn main() {
@@ -260,6 +309,6 @@ mod tests {
     fn example() {
         let input = include_str!("example.txt");
         verify!(part1, input, "1651");
-        verify!(part2, input, "0");
+        verify!(part2, input, "1707");
     }
 }
