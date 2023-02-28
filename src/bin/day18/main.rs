@@ -1,6 +1,7 @@
 use advent_of_code::{create_runner, named, Named, Runner};
 use std::{
-    collections::HashSet,
+    collections::{HashSet, VecDeque},
+    iter::repeat,
     ops::Add,
     str::{FromStr, Lines},
 };
@@ -50,18 +51,23 @@ impl FromStr for Pos {
     }
 }
 
-fn part1(input: Lines) -> String {
-    let coords = input
-        .flat_map(|line| line.parse::<Pos>().ok())
-        .collect::<HashSet<Pos>>();
-    let sides = vec![
+fn all_sides() -> Vec<Pos> {
+    vec![
         Pos::new(-1, 0, 0),
         Pos::new(1, 0, 0),
         Pos::new(0, -1, 0),
         Pos::new(0, 1, 0),
         Pos::new(0, 0, -1),
         Pos::new(0, 0, 1),
-    ];
+    ]
+}
+
+fn part1(input: Lines) -> String {
+    let coords = input
+        .flat_map(|line| line.parse::<Pos>().ok())
+        .collect::<HashSet<Pos>>();
+
+    let sides = all_sides();
     coords
         .iter()
         .copied()
@@ -76,8 +82,89 @@ fn part1(input: Lines) -> String {
         .to_string()
 }
 
+struct Matrix3<T: Copy> {
+    size: Pos,
+    elements: Vec<T>,
+}
+
+impl<T: Copy> Matrix3<T> {
+    fn new(size: Pos, value: T) -> Self {
+        let num_elements = size.x as usize * size.y as usize * size.z as usize;
+        println!("Maxtrix3::new size={size:?} num_elements={num_elements}");
+        let elements = Vec::from_iter(repeat(value).take(num_elements));
+        Self { size, elements }
+    }
+
+    fn in_bounds(&self, pos: Pos) -> bool {
+        pos.x >= 0
+            && pos.y >= 0
+            && pos.z >= 0
+            && pos.x < self.size.x
+            && pos.y < self.size.y
+            && pos.z < self.size.z
+    }
+
+    fn offset(&self, pos: Pos) -> usize {
+        ((pos.z as usize) * (self.size.y as usize) + (pos.y as usize)) * (self.size.x as usize)
+            + (pos.x as usize)
+    }
+    fn get(&self, pos: Pos) -> Option<T> {
+        if self.in_bounds(pos) {
+            Some(self.elements[self.offset(pos)])
+        } else {
+            None
+        }
+    }
+    fn set(&mut self, pos: Pos, value: T) {
+        let offset = self.offset(pos);
+        self.elements[offset] = value;
+    }
+}
+
+fn mark_outside(coords: &HashSet<Pos>) -> Matrix3<bool> {
+    let size = Pos::new(
+        coords.iter().map(|c| c.x).max().unwrap_or(0) + 2,
+        coords.iter().map(|c| c.y).max().unwrap_or(0) + 2,
+        coords.iter().map(|c| c.z).max().unwrap_or(0) + 2,
+    );
+    let sides = all_sides();
+    let mut outside = Matrix3::<bool>::new(size, false);
+    let mut to_visit: VecDeque<Pos> = VecDeque::new();
+    to_visit.push_back(Pos::new(0, 0, 0));
+    while let Some(pos) = to_visit.pop_back() {
+        if outside.get(pos) == Some(false) && !coords.contains(&pos) {
+            outside.set(pos, true);
+            for &offset in sides.iter() {
+                let new_pos = pos + offset;
+                if outside.get(new_pos) == Some(false) {
+                    to_visit.push_back(new_pos)
+                }
+            }
+        }
+    }
+    outside
+}
+
 fn part2(input: Lines) -> String {
-    input.take(0).count().to_string()
+    let coords = input
+        .flat_map(|line| line.parse::<Pos>().ok())
+        .collect::<HashSet<Pos>>();
+
+    let outside = mark_outside(&coords);
+    let sides = all_sides();
+
+    coords
+        .iter()
+        .copied()
+        .map(|pos| {
+            sides
+                .iter()
+                .copied()
+                .filter(|&s| outside.get(pos + s).unwrap_or(true))
+                .count()
+        })
+        .sum::<usize>()
+        .to_string()
 }
 
 fn main() {
@@ -96,6 +183,6 @@ mod tests {
     fn example() {
         let input = include_str!("example.txt");
         verify!(part1, input, "64");
-        verify!(part2, input, "0");
+        verify!(part2, input, "58");
     }
 }
