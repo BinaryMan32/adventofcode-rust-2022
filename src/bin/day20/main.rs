@@ -35,7 +35,24 @@ fn part1(input: Lines) -> String {
 }
 
 fn part2(input: Lines) -> String {
-    input.take(0).count().to_string()
+    let decryption_key = 811589153;
+    let numbers = input
+        .flat_map(|line| line.parse::<isize>().ok())
+        .map(|n| n * decryption_key)
+        .collect_vec();
+    let mut mixed = (0..numbers.len()).collect_vec();
+    for _ in 0..10 {
+        for (id, &num) in numbers.iter().enumerate() {
+            mix(&mut mixed, id, num as isize)
+        }
+    }
+    let zero = find(&numbers, 0);
+    let zero = find(&mixed, zero);
+    [1000, 2000, 3000]
+        .map(|pos| get(&numbers, &mixed, zero + pos))
+        .iter()
+        .sum::<isize>()
+        .to_string()
 }
 
 fn main() {
@@ -78,6 +95,6 @@ mod tests {
     fn example() {
         let input = include_str!("example.txt");
         verify!(part1, input, "3");
-        verify!(part2, input, "0");
+        verify!(part2, input, "1623178306");
     }
 }
