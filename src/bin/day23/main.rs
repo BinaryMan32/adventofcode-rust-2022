@@ -1,5 +1,5 @@
 use advent_of_code::{create_runner, named, Named, Runner};
-use itertools::{iterate, Either, Itertools};
+use itertools::{iterate, unfold, Either, Itertools};
 use std::{collections::HashMap, collections::HashSet, ops::Add, str::Lines};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -70,17 +70,47 @@ struct Proposed {
     move_to: HashMap<Pos, Vec<Pos>>,
 }
 
+#[derive(Clone)]
 struct State {
     proposals: Vec<Proposal>,
     elves: HashSet<Pos>,
 }
 
 impl State {
-    fn do_round(&self) -> State {
+    fn default_proposals() -> Vec<Proposal> {
+        vec![
+            Proposal {
+                check: vec![Direction::N, Direction::NE, Direction::NW],
+                propose: Direction::N,
+            },
+            Proposal {
+                check: vec![Direction::S, Direction::SE, Direction::SW],
+                propose: Direction::S,
+            },
+            Proposal {
+                check: vec![Direction::W, Direction::NW, Direction::SW],
+                propose: Direction::W,
+            },
+            Proposal {
+                check: vec![Direction::E, Direction::NE, Direction::SE],
+                propose: Direction::E,
+            },
+        ]
+    }
+
+    fn new(elves: HashSet<Pos>) -> Self {
+        Self {
+            proposals: Self::default_proposals(),
+            elves,
+        }
+    }
+
+    fn do_round(&self) -> Option<State> {
         let proposed_moves = self.propose_moves();
-        let elves = self.do_moves(proposed_moves);
-        let proposals = Self::rotate_proposals(self.proposals.clone());
-        State { elves, proposals }
+        self.do_moves(proposed_moves).map(|elves| {
+            let proposals = Self::rotate_proposals(self.proposals.clone());
+            Self { elves, proposals }
+        })
     }
 
     fn propose_moves(&self) -> Proposed {
@@ -108,7 +138,7 @@ impl State {
         }
     }
 
-    fn do_moves(&self, proposed: Proposed) -> HashSet<Pos> {
+    fn do_moves(&self, proposed: Proposed) -> Option<HashSet<Pos>> {
         let (unique_dest, duplicate_src): (Vec<_>, Vec<_>) =
             proposed.move_to.into_iter().partition_map(|(to, from)| {
                 if from.len() == 1 {
@@ -117,12 +147,17 @@ impl State {
                     Either::Right(from)
                 }
             });
-        proposed
-            .no_move
-            .into_iter()
-            .chain(unique_dest.into_iter())
-            .chain(duplicate_src.into_iter().flatten())
-            .collect()
+
+        Some(unique_dest.into_iter().collect_vec())
+            .filter(|moved| !moved.is_empty())
+            .map(|moved| {
+                proposed
+                    .no_move
+                    .into_iter()
+                    .chain(moved)
+                    .chain(duplicate_src.into_iter().flatten())
+                    .collect()
+            })
     }
 
     fn rotate_proposals(proposals: Vec<Proposal>) -> Vec<Proposal> {
@@ -167,26 +202,8 @@ impl State {
 
 fn part1(input: Lines) -> String {
     let elves = parse_elves(input);
-    let proposals = vec![
-        Proposal {
-            check: vec![Direction::N, Direction::NE, Direction::NW],
-            propose: Direction::N,
-        },
-        Proposal {
-            check: vec![Direction::S, Direction::SE, Direction::SW],
-            propose: Direction::S,
-        },
-        Proposal {
-            check: vec![Direction::W, Direction::NW, Direction::SW],
-            propose: Direction::W,
-        },
-        Proposal {
-            check: vec![Direction::E, Direction::NE, Direction::SE],
-            propose: Direction::E,
-        },
-    ];
-    let state = State { proposals, elves };
-    iterate(state, |state| state.do_round())
+
+    iterate(State::new(elves), |state| state.do_round().unwrap())
         .nth(10)
         .unwrap()
         .empty_tiles_in_smallest_rectangle()
@@ -194,7 +211,19 @@ fn part1(input: Lines) -> String {
 }
 
 fn part2(input: Lines) -> String {
-    input.take(0).count().to_string()
+    let elves = parse_elves(input);
+    let last_round_moved = unfold(State::new(elves), |state| {
+        let next = state.do_round();
+        if let Some(next_state) = next.clone() {
+            *state = next_state
+        }
+        next
+    })
+    .enumerate()
+    .last()
+    .unwrap()
+    .0 + 1;
+    (last_round_moved + 1).to_string()
 }
 
 fn main() {
@@ -213,6 +242,6 @@ mod tests {
     fn example() {
         let input = include_str!("example.txt");
         verify!(part1, input, "110");
-        verify!(part2, input, "0");
+        verify!(part2, input, "20");
     }
 }
